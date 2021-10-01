@@ -5,6 +5,9 @@ Shader "Unlit/Goop"
         // _MainTex ("Texture", 2D) = "white" {}
         _Color ("Color", Color) = (1, 0.5, 0.5, 1)
         _Gloss ("Gloss", Range(0, 1)) = 0.5
+        _Gooeyness ("Gooeyness", Range(0, 1)) = 0.5
+        _Period ("Period", Range(2, 4)) = 3
+        _Radius ("Radius", Range(1, 3)) = 2
     }
     SubShader
     {
@@ -53,6 +56,9 @@ Shader "Unlit/Goop"
             // float4 _MainTex_ST;
             float4 _Color;
             float _Gloss;
+            float _Gooeyness;
+            float _Period;
+            float _Radius;
 
             Interpolators vert (MeshData v)
             {
@@ -67,20 +73,22 @@ Shader "Unlit/Goop"
 
             // Blend between spheres
             float BlendShapes( float d1, float d2 ) {
-                float k = 0.5;
+                float k = _Gooeyness;
                 float h = saturate( 0.5 + 0.5 * ( d1 - d2 ) / k );
                 return lerp( d1, d2, h ) - k * h * ( 1 - h );
             }
 
             // Create SDF
             float SDF( float3 pos) {
+                float period = _Period;
+                float radius = _Radius * 0.05;
                 float3 h = float3( 0, 0, 0 );
-                float3 sphere1 = float3( 0, sin( _Time.y * TAU / 3 ), 0) * 0.3 + h;
-                float radius1 = 0.1;
-                float3 sphere2 = float3( sin( _Time.y * TAU / 3 ), 0, cos( _Time.y * TAU / 3 ) ) * 0.3 + h;
-                float radius2 = 0.1;
-                float3 sphere3 = float3( 0, cos( _Time.y * TAU / 3 ), sin( _Time.y * TAU / 3 ) ) * 0.3 + h;
-                float radius3 = 0.1;
+                float3 sphere1 = float3( cos( _Time.y * TAU / _Period ), sin( _Time.y * TAU / _Period ), 0) * 0.3 + h;
+                float radius1 = radius;
+                float3 sphere2 = float3( sin( _Time.y * TAU / _Period ), 0, cos( _Time.y * TAU / _Period ) ) * 0.3 + h;
+                float radius2 = radius;
+                float3 sphere3 = float3( 0, cos( _Time.y * TAU / _Period ), sin( _Time.y * TAU / _Period ) ) * 0.3 + h;
+                float radius3 = radius;
 
                 float distance1 = distance( pos, sphere1 ) - radius1;
                 float distance2 = distance( pos, sphere2 ) - radius2;
